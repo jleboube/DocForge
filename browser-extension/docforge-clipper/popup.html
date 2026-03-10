@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DocForge Clipper</title>
+  <link rel="stylesheet" href="popup.css" />
+</head>
+<body>
+  <main>
+    <h1>DocForge Clipper</h1>
+    <p class="hint">Capture selected text from the active page.</p>
+
+    <label>
+      API Base URL
+      <input id="apiBase" placeholder="http://localhost:48080" />
+    </label>
+
+    <label>
+      Title (optional override)
+      <input id="title" placeholder="Use current page title" />
+    </label>
+
+    <label>
+      Note (optional)
+      <textarea id="note" placeholder="Context for this capture"></textarea>
+    </label>
+
+    <div class="actions">
+      <button id="captureSelection">Capture Selection</button>
+      <button id="capturePage" class="ghost">Capture Page Excerpt</button>
+    </div>
+
+    <pre id="status"></pre>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

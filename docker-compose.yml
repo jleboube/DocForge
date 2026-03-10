@@ -1,0 +1,96 @@
+services:
+  mongodb:
+    image: mongo:7
+    container_name: docforge-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+      - ./mongodb/init.js:/docker-entrypoint-initdb.d/01-init.js:ro
+      - ./mongodb/indexes.js:/docker-entrypoint-initdb.d/02-indexes.js:ro
+
+  api:
+    build:
+      context: .
+      dockerfile: services/api/Dockerfile
+    container_name: docforge-api
+    restart: unless-stopped
+    ports:
+      - "48080:8080"
+    depends_on:
+      - mongodb
+    environment:
+      - NODE_ENV=production
+      - API_PORT=8080
+      - MONGO_URI=mongodb://mongodb:27017/docforge
+      - CHUNK_SIZE=500
+      - CHUNK_OVERLAP=100
+      - EMBEDDING_MODEL=docforge-hash-v1
+    volumes:
+      - ./:/workspace:ro
+
+  source-manager:
+    build:
+      context: .
+      dockerfile: services/source-manager/Dockerfile
+    container_name: docforge-source-manager
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:8080
+      - INTERVAL_SECONDS=300
+
+  ingestion-worker:
+    build:
+      context: .
+      dockerfile: services/ingestion-worker/Dockerfile
+    container_name: docforge-ingestion-worker
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:8080
+      - INTERVAL_SECONDS=15
+
+  embedding-worker:
+    build:
+      context: .
+      dockerfile: services/embedding-worker/Dockerfile
+    container_name: docforge-embedding-worker
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:8080
+      - INTERVAL_SECONDS=60
+
+  scheduler:
+    build:
+      context: .
+      dockerfile: services/scheduler/Dockerfile
+    container_name: docforge-scheduler
+    restart: unless-stopped
+    depends_on:
+      - api
+    environment:
+      - API_URL=http://api:8080
+      - INTERVAL_SECONDS=180
+
+  web-ui:
+    build:
+      context: .
+      dockerfile: services/web-ui/Dockerfile
+    container_name: docforge-web-ui
+    restart: unless-stopped
+    ports:
+      - "49261:3000"
+    depends_on:
+      - api
+    environment:
+      - WEB_PORT=3000
+      - API_URL=http://api:8080
+
+volumes:
+  mongo_data:

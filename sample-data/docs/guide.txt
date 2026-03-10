@@ -1,0 +1,2 @@
+Chunking keeps context windows manageable and improves retrieval quality.
+Updated content proves source change detection works.

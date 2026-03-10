@@ -1,0 +1,166 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DocForge Local</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Fraunces:opsz,wght@9..144,600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="aurora aurora-a"></div>
+  <div class="aurora aurora-b"></div>
+
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand">
+        <span class="dot"></span>
+        <div>
+          <h1>DocForge</h1>
+          <p>Local Knowledge Engine</p>
+        </div>
+      </div>
+
+      <nav class="nav" id="nav-tabs">
+        <button data-tab="dashboard" class="active">Dashboard</button>
+        <button data-tab="sources">Sources</button>
+        <button data-tab="documents">Documents</button>
+        <button data-tab="highlights">Highlights</button>
+        <button data-tab="search">Search</button>
+        <button data-tab="ingest">Web Capture</button>
+        <button data-tab="admin">Admin</button>
+      </nav>
+
+      <div class="sidebar-foot">
+        <div class="pill">Web: <code>49261</code></div>
+        <div class="pill">API: <code>48080</code></div>
+      </div>
+    </aside>
+
+    <main class="content">
+      <header class="hero">
+        <h2 id="page-title">Dashboard</h2>
+        <p id="page-subtitle">Operations overview across ingestion, highlights, and retrieval.</p>
+        <div class="hero-actions">
+          <button class="ghost" id="global-refresh">Refresh All</button>
+        </div>
+      </header>
+
+      <section id="dashboard" class="panel active">
+        <div class="kpi-grid" id="kpi-grid"></div>
+        <div class="card split">
+          <div>
+            <h3>Recent Documents</h3>
+            <ul class="list" id="dashboard-docs"></ul>
+          </div>
+          <div>
+            <h3>Recent Highlights</h3>
+            <ul class="list" id="dashboard-highlights"></ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="sources" class="panel">
+        <div class="card">
+          <h3>Register Source</h3>
+          <form id="source-form" class="form-grid">
+            <input name="name" placeholder="Source name" required />
+            <select name="type" required>
+              <option value="folder">folder</option>
+              <option value="kindle">kindle</option>
+              <option value="git">git</option>
+              <option value="onenote">onenote</option>
+            </select>
+            <input name="path" placeholder="Path" />
+            <button type="submit">Add Source</button>
+          </form>
+        </div>
+        <div class="card">
+          <div class="row-head">
+            <h3>Registered Sources</h3>
+            <button class="ghost" id="refresh-sources">Refresh</button>
+          </div>
+          <ul class="list" id="sources-list"></ul>
+        </div>
+      </section>
+
+      <section id="documents" class="panel">
+        <div class="card">
+          <div class="row-head">
+            <h3>Documents</h3>
+            <button class="ghost" id="refresh-docs">Refresh</button>
+          </div>
+          <ul class="list" id="documents-list"></ul>
+        </div>
+      </section>
+
+      <section id="highlights" class="panel">
+        <div class="card">
+          <h3>Add Manual Highlight</h3>
+          <form id="highlight-form" class="form-grid">
+            <input name="sourceBook" placeholder="Source book or article" />
+            <textarea name="highlightText" placeholder="Highlight text" required></textarea>
+            <button type="submit">Save Highlight</button>
+          </form>
+        </div>
+        <div class="card">
+          <div class="row-head">
+            <h3>Highlight Library</h3>
+            <button class="ghost" id="refresh-highlights">Refresh</button>
+          </div>
+          <ul class="list" id="highlights-list"></ul>
+        </div>
+      </section>
+
+      <section id="search" class="panel">
+        <div class="card">
+          <h3>Hybrid Search</h3>
+          <form id="search-form" class="inline-form">
+            <input name="query" placeholder="Ask your library" required />
+            <button type="submit">Search</button>
+          </form>
+          <div id="search-results"></div>
+        </div>
+      </section>
+
+      <section id="ingest" class="panel">
+        <div class="card">
+          <h3>Clip Payload</h3>
+          <form id="clip-form" class="form-grid">
+            <input name="url" placeholder="URL" />
+            <input name="title" placeholder="Title" />
+            <input name="author" placeholder="Author" />
+            <textarea name="html" placeholder="Paste article HTML or text"></textarea>
+            <input name="highlights" placeholder="Highlights (pipe-separated)" />
+            <div class="button-row">
+              <button type="button" id="clip-submit">Submit Clip</button>
+              <button type="button" class="ghost" id="import-url">Import URL</button>
+            </div>
+          </form>
+          <pre class="mono" id="clip-result"></pre>
+        </div>
+      </section>
+
+      <section id="admin" class="panel">
+        <div class="card">
+          <h3>Control Plane</h3>
+          <div class="button-row wrap">
+            <button id="reindex-all">Reindex All</button>
+            <button class="ghost" id="scan-sources">Scan Sources</button>
+            <button class="ghost" id="process-jobs">Process Jobs</button>
+            <button class="ghost" id="retry-failed">Retry Failed</button>
+            <button class="ghost" id="reembed">Reembed Missing</button>
+            <button class="ghost" id="refresh-stats">Refresh Stats</button>
+          </div>
+          <pre class="mono" id="admin-stats"></pre>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="toast" class="toast"></div>
+  <script src="/app.js"></script>
+</body>
+</html>

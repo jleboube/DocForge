@@ -1,0 +1,11 @@
+{
+  "manifest_version": 3,
+  "name": "DocForge Clipper",
+  "version": "1.0.0",
+  "description": "Capture selected webpage text and send it to DocForge.",
+  "permissions": ["activeTab", "scripting", "storage"],
+  "action": {
+    "default_title": "DocForge Clipper",
+    "default_popup": "popup.html"
+  }
+}
