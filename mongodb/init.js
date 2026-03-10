@@ -1,6 +1,7 @@
 db = db.getSiblingDB("docforge");
 
 db.createCollection("sources");
+db.createCollection("users");
 db.createCollection("documents");
 db.createCollection("document_contents");
 db.createCollection("document_chunks");

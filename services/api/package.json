@@ -9,6 +9,8 @@
   "dependencies": {
     "cors": "^2.8.5",
     "express": "^4.19.2",
+    "google-auth-library": "^9.14.2",
+    "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.9.0"
   }
 }

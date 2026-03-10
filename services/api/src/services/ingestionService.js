@@ -3,16 +3,34 @@ const { chunkText } = require("../utils/chunker");
 const { buildEmbedding } = require("../utils/embedding");
 const { parseKindleClippings } = require("../ingestion/kindle");
 const { ingestFolderSource } = require("../ingestion/folder");
+const { persistOriginalFromFile, persistOriginalFromText } = require("../utils/originalStore");
 
 function now() {
   return new Date();
 }
 
+function normalizeTags(input) {
+  if (!Array.isArray(input)) {
+    return [];
+  }
+
+  const unique = new Set();
+  for (const tag of input) {
+    const normalized = String(tag || "").trim().toLowerCase();
+    if (normalized) {
+      unique.add(normalized);
+    }
+  }
+  return Array.from(unique);
+}
+
 async function storeDocumentWithChunks(db, source, docInput, options = {}) {
   const timestamp = now();
   const sourceId = String(source._id);
+  const userId = String(source.userId);
 
   const existing = await db.collection("documents").findOne({
+    userId,
     sourceId,
     sourcePath: docInput.sourcePath
   });
@@ -29,6 +47,7 @@ async function storeDocumentWithChunks(db, source, docInput, options = {}) {
   }
 
   const document = {
+    userId,
     sourceId,
     sourceType: source.type,
     sourcePath: docInput.sourcePath,
@@ -36,6 +55,7 @@ async function storeDocumentWithChunks(db, source, docInput, options = {}) {
     title: docInput.title,
     mimeType: docInput.mimeType,
     contentHash: docInput.contentHash,
+    tags: normalizeTags(docInput.tags),
     updatedAt: timestamp,
     metadata: {
       ...(docInput.extractedMetadata || {}),
@@ -43,22 +63,27 @@ async function storeDocumentWithChunks(db, source, docInput, options = {}) {
     }
   };
 
+  if (docInput.originalFile) {
+    document.originalFile = docInput.originalFile;
+  }
+
   const docRes = await db.collection("documents").findOneAndUpdate(
-    { sourceId, sourcePath: docInput.sourcePath },
+    { userId, sourceId, sourcePath: docInput.sourcePath },
     { $set: document, $setOnInsert: { createdAt: timestamp } },
     { upsert: true, returnDocument: "after" }
   );
 
   let persistedDoc = docRes && docRes.value ? docRes.value : docRes;
   if (!persistedDoc) {
-    persistedDoc = await db.collection("documents").findOne({ sourceId, sourcePath: docInput.sourcePath });
+    persistedDoc = await db.collection("documents").findOne({ userId, sourceId, sourcePath: docInput.sourcePath });
   }
   const documentId = persistedDoc._id;
 
   await db.collection("document_contents").updateOne(
-    { documentId: String(documentId) },
+    { userId, documentId: String(documentId) },
     {
       $set: {
+        userId,
         documentId: String(documentId),
         text: docInput.text,
         updatedAt: timestamp
@@ -72,19 +97,22 @@ async function storeDocumentWithChunks(db, source, docInput, options = {}) {
   const chunkOverlap = Number(process.env.CHUNK_OVERLAP || 100);
   const chunks = chunkText(docInput.text, chunkSize, chunkOverlap);
 
-  await db.collection("document_chunks").deleteMany({ documentId: String(documentId) });
+  await db.collection("document_chunks").deleteMany({ userId, documentId: String(documentId) });
 
   if (chunks.length) {
     const chunkDocs = chunks.map((chunk) => ({
+      userId,
       documentId: String(documentId),
       sourceId,
       text: chunk.text,
       chunkIndex: chunk.index,
       embedding: buildEmbedding(chunk.text),
       metadata: {
+        userId,
         sourceId,
         sourcePath: docInput.sourcePath,
         sourceType: source.type,
+        tags: normalizeTags(docInput.tags),
         startWord: chunk.startWord,
         endWord: chunk.endWord,
         title: docInput.title
@@ -103,6 +131,7 @@ async function storeDocumentWithChunks(db, source, docInput, options = {}) {
   }
 
   await db.collection("source_sync_events").insertOne({
+    userId,
     sourceId,
     sourceType: source.type,
     eventType: existing ? "updated" : "created",
@@ -120,6 +149,18 @@ async function ingestFolder(db, source, options = {}) {
   const unchanged = [];
 
   for (const doc of result.documents || []) {
+    try {
+      const originalFile = await persistOriginalFromFile({
+        userId: String(source.userId),
+        sourceId: String(source._id),
+        sourcePath: doc.sourcePath,
+        contentHash: doc.contentHash
+      });
+      doc.originalFile = originalFile;
+    } catch (error) {
+      result.errors.push(`Failed to store original file ${doc.sourcePath}: ${error.message}`);
+    }
+
     const storeResult = await storeDocumentWithChunks(db, source, doc, options);
     if (storeResult.updated) {
       updates += 1;
@@ -160,12 +201,13 @@ async function ingestKindle(db, source) {
       .update(`${String(source._id)}::${item.highlightText}::${item.location || ""}`)
       .digest("hex");
 
-    const existing = await db.collection("highlights").findOne({ dedupeKey: dedupe });
+    const existing = await db.collection("highlights").findOne({ userId: String(source.userId), dedupeKey: dedupe });
     if (existing) {
       continue;
     }
 
     await db.collection("highlights").insertOne({
+      userId: String(source.userId),
       sourceId: String(source._id),
       dedupeKey: dedupe,
       ...item,
@@ -176,6 +218,7 @@ async function ingestKindle(db, source) {
   }
 
   await db.collection("source_sync_events").insertOne({
+    userId: String(source.userId),
     sourceId: String(source._id),
     sourceType: source.type,
     eventType: "kindle_sync",
@@ -188,6 +231,7 @@ async function ingestKindle(db, source) {
 
 async function ingestWebClip(db, source, clipPayload) {
   const sourceId = String(source._id);
+  const userId = String(source.userId);
   const text = (clipPayload.text || clipPayload.html || "").replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
 
   if (!text) {
@@ -200,6 +244,7 @@ async function ingestWebClip(db, source, clipPayload) {
     title: clipPayload.title || "Web Clip",
     mimeType: "text/html",
     contentHash: hash,
+    tags: normalizeTags(clipPayload.tags),
     text,
     extractedMetadata: {
       author: clipPayload.author || "",
@@ -207,6 +252,14 @@ async function ingestWebClip(db, source, clipPayload) {
       publishDate: clipPayload.publishDate || ""
     }
   };
+
+  docInput.originalFile = await persistOriginalFromText({
+    userId,
+    sourceId,
+    fileName: `${(clipPayload.title || "web-clip").replace(/[^a-zA-Z0-9._-]+/g, "-")}.html`,
+    text: clipPayload.html || clipPayload.text || text,
+    contentHash: hash
+  });
 
   await storeDocumentWithChunks(db, source, docInput, { force: true });
 
@@ -219,6 +272,7 @@ async function ingestWebClip(db, source, clipPayload) {
     }
 
     await db.collection("highlights").insertOne({
+      userId,
       sourceId,
       sourceType: "webclip",
       sourceBook: clipPayload.title || clipPayload.url || "Web Clip",
@@ -226,7 +280,7 @@ async function ingestWebClip(db, source, clipPayload) {
       highlightText: highlightText.trim(),
       location: clipPayload.url || "",
       highlightDate: clipPayload.publishDate || "",
-      tags: [],
+      tags: normalizeTags(clipPayload.tags),
       userNotes: clipPayload.note || "",
       createdAt: now()
     });

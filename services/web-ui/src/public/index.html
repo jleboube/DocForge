@@ -13,7 +13,39 @@
   <div class="aurora aurora-a"></div>
   <div class="aurora aurora-b"></div>
 
-  <div class="app-shell">
+  <section id="marketing" class="marketing">
+    <header class="marketing-hero">
+      <p class="eyebrow">DocForge</p>
+      <h1>Your Private Document Memory, Built For Retrieval</h1>
+      <p class="lead">Ingest OneNote exports, Kindle highlights, webpages, and local files into a self-hosted knowledge engine with per-user isolation.</p>
+      <div class="cta-row">
+        <button id="marketing-google-login">Continue with Google</button>
+        <a href="/extension/manifest.json" target="_blank" rel="noopener noreferrer" class="cta-link">Get Chrome Extension</a>
+      </div>
+      <p class="small-note">Free for now. Access is currently limited to Google-authenticated users.</p>
+    </header>
+
+    <section class="benefits">
+      <article class="benefit-card">
+        <h3>True Document Store</h3>
+        <p>DocForge keeps original files and RAG-ready representations together, linked by source and user ownership.</p>
+      </article>
+      <article class="benefit-card">
+        <h3>Readwise-Like Knowledge Feed</h3>
+        <p>Capture Kindle highlights, web snippets, and notes into a searchable personal memory layer.</p>
+      </article>
+      <article class="benefit-card">
+        <h3>Self-Hosted and Isolated</h3>
+        <p>Every user only sees their own artifacts. No cross-user discovery, no shared data leakage.</p>
+      </article>
+      <article class="benefit-card">
+        <h3>Tag-Driven Retrieval</h3>
+        <p>Apply custom tags to artifacts and instantly retrieve context by tag, semantic search, or both.</p>
+      </article>
+    </section>
+  </section>
+
+  <div class="app-shell hidden">
     <aside class="sidebar">
       <div class="brand">
         <span class="dot"></span>
@@ -31,11 +63,12 @@
         <button data-tab="search">Search</button>
         <button data-tab="ingest">Web Capture</button>
         <button data-tab="admin">Admin</button>
+        <button data-tab="help">Help</button>
       </nav>
 
       <div class="sidebar-foot">
-        <div class="pill">Web: <code>49261</code></div>
-        <div class="pill">API: <code>48080</code></div>
+        <div class="pill">Web: <code id="web-host-pill">-</code></div>
+        <div class="pill">API: <code id="api-host-pill">-</code></div>
       </div>
     </aside>
 
@@ -44,7 +77,9 @@
         <h2 id="page-title">Dashboard</h2>
         <p id="page-subtitle">Operations overview across ingestion, highlights, and retrieval.</p>
         <div class="hero-actions">
+          <div id="user-chip" class="user-chip hidden"></div>
           <button class="ghost" id="global-refresh">Refresh All</button>
+          <button class="ghost hidden" id="logout">Sign Out</button>
         </div>
       </header>
 
@@ -102,6 +137,7 @@
           <form id="highlight-form" class="form-grid">
             <input name="sourceBook" placeholder="Source book or article" />
             <textarea name="highlightText" placeholder="Highlight text" required></textarea>
+            <input name="tags" placeholder="Tags (comma-separated)" />
             <button type="submit">Save Highlight</button>
           </form>
         </div>
@@ -121,6 +157,10 @@
             <input name="query" placeholder="Ask your library" required />
             <button type="submit">Search</button>
           </form>
+          <form id="tag-search-form" class="inline-form">
+            <input name="tag" placeholder="Search by tag only" required />
+            <button type="submit" class="ghost">Find Tag</button>
+          </form>
           <div id="search-results"></div>
         </div>
       </section>
@@ -134,6 +174,7 @@
             <input name="author" placeholder="Author" />
             <textarea name="html" placeholder="Paste article HTML or text"></textarea>
             <input name="highlights" placeholder="Highlights (pipe-separated)" />
+            <input name="tags" placeholder="Tags (comma-separated)" />
             <div class="button-row">
               <button type="button" id="clip-submit">Submit Clip</button>
               <button type="button" class="ghost" id="import-url">Import URL</button>
@@ -157,8 +198,46 @@
           <pre class="mono" id="admin-stats"></pre>
         </div>
       </section>
+
+      <section id="help" class="panel">
+        <div class="card">
+          <h3>How To Import Content</h3>
+          <div class="help-copy">
+            <h4>1. Folder Documents (PDF/TXT/MD/etc.)</h4>
+            <p>Go to <strong>Sources</strong>, add a source with type <code>folder</code>, and enter a container-visible path (example: <code>/workspace/sample-data/docs</code>).</p>
+
+            <h4>2. Kindle Highlights</h4>
+            <p>Add a source with type <code>kindle</code> and point to <code>My Clippings.txt</code>. Run scan/reindex from Admin or wait for workers.</p>
+
+            <h4>3. Webpages</h4>
+            <p>Use <strong>Web Capture</strong> to paste article text/HTML or use <strong>Import URL</strong> for server fetch ingestion.</p>
+
+            <h4>4. OneNote</h4>
+            <p>Use source type <code>onenote</code> as a placeholder. Current MVP tracks the source, while parser integration is scaffolded for expansion.</p>
+
+            <h4>5. Tagging Artifacts</h4>
+            <p>Set tags when creating highlights/clips, or click <strong>Set Tags</strong> on documents/highlights lists. Use <strong>Find Tag</strong> in Search.</p>
+
+            <h4>6. Chrome Extension</h4>
+            <p>Extension files are served directly by this app:</p>
+            <ul class="help-list">
+              <li><a href="/extension/manifest.json" target="_blank" rel="noopener noreferrer">manifest.json</a></li>
+              <li><a href="/extension/popup.html" target="_blank" rel="noopener noreferrer">popup.html</a></li>
+              <li><a href="/extension/popup.js" target="_blank" rel="noopener noreferrer">popup.js</a></li>
+              <li><a href="/extension/popup.css" target="_blank" rel="noopener noreferrer">popup.css</a></li>
+            </ul>
+            <p>Install: Chrome -> <code>chrome://extensions</code> -> Developer Mode -> Load unpacked (folder containing these files).</p>
+          </div>
+        </div>
+      </section>
     </main>
   </div>
+
+  <section id="auth-panel" class="auth-inline">
+    <button id="google-login-btn" class="hidden">Sign in with Google</button>
+    <button id="apple-login" class="ghost hidden">Sign in with Apple (Setup Pending)</button>
+    <pre class="mono" id="auth-status"></pre>
+  </section>
 
   <div id="toast" class="toast"></div>
   <script src="/app.js"></script>

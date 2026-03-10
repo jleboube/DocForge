@@ -23,10 +23,51 @@
 - [x] Document extension install and usage flow
 - [x] Verify end-to-end clip ingestion from extension payload format
 
+## Phase 3 (Completed)
+- [x] Add Google OAuth login in web app
+- [x] Add API auth endpoints and token verification
+- [x] Enforce per-user data isolation across all CRUD/search/ingestion flows
+- [x] Scope ingestion jobs and source sync by user
+- [x] Add internal worker auth token for non-user background operations
+- [x] Add Apple OAuth scaffolding and setup notes
+- [x] Update docs and env templates for OAuth setup
+- [x] Verify multi-user isolation behavior and regressions
+
+## Phase 4 (Completed)
+- [x] Add domain-aware runtime configuration for tunnel deployments
+- [x] Add configurable CORS allowlist for custom domains
+- [x] Remove hardcoded local host/port UI assumptions
+- [x] Document Cloudflare Tunnel routing patterns and env setup
+- [x] Verify API/web-ui rebuild with domain support settings
+
+## Phase 5 (Completed)
+- [x] Switch Google auth to authorization code flow using client ID + client secret
+- [x] Add `/auth/google/start` and `/auth/google/callback`
+- [x] Update web UI login action to redirect-based OAuth flow
+- [x] Add deploy bootstrap scripts to auto-generate internal secrets
+- [x] Keep user-provided external OAuth credentials explicit in env/docs
+
+## Phase 6 (Completed)
+- [x] Add optional tags to document and highlight artifacts
+- [x] Add tag update endpoints for existing artifacts
+- [x] Add tag-aware search and dedicated tag query endpoint
+- [x] Wire UI inputs for tags and tag-only search
+- [x] Add Mongo indexes for tag filtering
+
+## Phase 7 (Completed)
+- [x] Add in-app Help section with source import instructions
+- [x] Document OneNote, Kindle, webpage, and folder workflows in UI
+- [x] Include Chrome extension installation guidance in Help
+- [x] Serve extension files directly from the web app
+
+## Phase 8 (Completed)
+- [x] Add true document-store behavior to persist original ingested artifacts
+- [x] Store originals in user-scoped server folders under persistent docker volume
+- [x] Expose secure endpoint for downloading original files
+- [x] Add animated marketing landing page for unauthenticated users
+- [x] Keep palette non-purple and include Google-only free-tier messaging
+
 ## Review
-- Rebuilt and restarted `api` and `web-ui` with `docker compose up --build -d api web-ui`.
-- Verified API and UI availability:
-  - `GET http://localhost:48080/health`
-  - `GET http://localhost:49261`
-- Verified CORS preflight support for extension origins on `/clip`.
-- Verified `/clip` ingestion with extension-style payload including `note`, confirmed stored in `highlights.userNotes`.
+- Originals are now persisted to `DOCUMENT_STORE_ROOT` (`/var/docforge/store`) via `docforge_store` volume.
+- Added `GET /documents/:id/original` with auth and tenant checks.
+- Added animated landing page plus Help tab and extension links served by web-ui.

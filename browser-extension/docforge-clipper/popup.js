@@ -1,4 +1,5 @@
 const apiInput = document.getElementById("apiBase");
+const tokenInput = document.getElementById("appToken");
 const titleInput = document.getElementById("title");
 const noteInput = document.getElementById("note");
 const statusBox = document.getElementById("status");
@@ -43,11 +44,15 @@ async function getPageCapture(activeTab, mode) {
 
 async function postClip(payload) {
   const apiBase = String(apiInput.value || "http://localhost:48080").trim().replace(/\/$/, "");
-  await chrome.storage.local.set({ docforgeApiBase: apiBase });
+  const appToken = String(tokenInput.value || "").trim();
+  await chrome.storage.local.set({ docforgeApiBase: apiBase, docforgeAppToken: appToken });
 
   const response = await fetch(`${apiBase}/clip`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+      ...(appToken ? { Authorization: `Bearer ${appToken}` } : {})
+    },
     body: JSON.stringify(payload)
   });
 
@@ -95,6 +100,7 @@ document.getElementById("captureSelection").addEventListener("click", () => capt
 document.getElementById("capturePage").addEventListener("click", () => capture("page"));
 
 (async () => {
-  const stored = await chrome.storage.local.get(["docforgeApiBase"]);
+  const stored = await chrome.storage.local.get(["docforgeApiBase", "docforgeAppToken"]);
   apiInput.value = stored.docforgeApiBase || "http://localhost:48080";
+  tokenInput.value = stored.docforgeAppToken || "";
 })();

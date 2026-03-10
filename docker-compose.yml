@@ -24,11 +24,22 @@ services:
       - NODE_ENV=production
       - API_PORT=8080
       - MONGO_URI=mongodb://mongodb:27017/docforge
+      - DOCUMENT_STORE_ROOT=${DOCUMENT_STORE_ROOT:-/var/docforge/store}
       - CHUNK_SIZE=500
       - CHUNK_OVERLAP=100
       - EMBEDDING_MODEL=docforge-hash-v1
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI}
+      - JWT_SECRET=${JWT_SECRET:-docforge-dev-secret-change-me}
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN:-docforge-internal-token-change-me}
+      - PUBLIC_WEB_URL=${PUBLIC_WEB_URL:-http://localhost:49261}
+      - PUBLIC_API_URL=${PUBLIC_API_URL:-http://localhost:48080}
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:49261}
+      - TRUST_PROXY=${TRUST_PROXY:-true}
     volumes:
       - ./:/workspace:ro
+      - docforge_store:/var/docforge/store
 
   source-manager:
     build:
@@ -41,6 +52,7 @@ services:
     environment:
       - API_URL=http://api:8080
       - INTERVAL_SECONDS=300
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN:-docforge-internal-token-change-me}
 
   ingestion-worker:
     build:
@@ -53,6 +65,7 @@ services:
     environment:
       - API_URL=http://api:8080
       - INTERVAL_SECONDS=15
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN:-docforge-internal-token-change-me}
 
   embedding-worker:
     build:
@@ -65,6 +78,7 @@ services:
     environment:
       - API_URL=http://api:8080
       - INTERVAL_SECONDS=60
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN:-docforge-internal-token-change-me}
 
   scheduler:
     build:
@@ -77,6 +91,7 @@ services:
     environment:
       - API_URL=http://api:8080
       - INTERVAL_SECONDS=180
+      - INTERNAL_API_TOKEN=${INTERNAL_API_TOKEN:-docforge-internal-token-change-me}
 
   web-ui:
     build:
@@ -94,3 +109,4 @@ services:
 
 volumes:
   mongo_data:
+  docforge_store:

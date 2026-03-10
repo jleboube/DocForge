@@ -11,6 +11,7 @@ Capture selected text from a webpage and ingest it into DocForge with one action
 - Optional full-page excerpt fallback
 - Send payload to `POST /clip`
 - Store configurable API base URL in browser local storage
+- Store and send DocForge app bearer token for authenticated clip ingestion
 
 ## Payload Sent
 ```json
@@ -30,6 +31,7 @@ Capture selected text from a webpage and ingest it into DocForge with one action
 3. Click `Load unpacked`
 4. Select `browser-extension/docforge-clipper`
 5. Open extension popup and set API base URL to `http://localhost:48080`
+6. Paste a valid DocForge app token into `DocForge App Token`
 
 ## Notes
 - API CORS is enabled for extension-origin requests.
