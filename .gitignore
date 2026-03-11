@@ -51,3 +51,5 @@ node_modules/
 dist/
 build/
 coverage/
+# Files blocked by secret scanner - DO NOT REMOVE
+docker-compose.yml
